@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "bun run sync-widget && vite --host 0.0.0.0",
     "dev:with-backend": "concurrently --kill-others --names web,convex --prefix-colors cyan,green \"bun run dev\" \"bun run --cwd ../react-widget-bizcamp dev:convex\"",
-    "ensure-widget": "test -d ../react-widget-bizcamp/convex || (git clone --depth 1 \"${WIDGET_REPO_URL:-https://github.com/khos-streks/react-widget-bizcamp.git}\" ../react-widget-bizcamp && bun install --cwd ../react-widget-bizcamp)",
+    "ensure-widget": "bun run scripts/ensure-widget.mjs",
     "sync-widget": "bun run scripts/sync-widget-artifact.mjs",
     "convex:codegen": "cd ../react-widget-bizcamp && convex codegen --typecheck disable",
     "convex:deploy": "cd ../react-widget-bizcamp && convex deploy",
