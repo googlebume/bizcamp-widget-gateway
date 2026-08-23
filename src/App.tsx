@@ -2,10 +2,14 @@ import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-do
 import { Atmosphere } from '@/components/atmosphere'
 import { LandingPage } from '@/features/landing/landing-page'
 import { DashboardShell } from '@/features/dashboard/dashboard-shell'
+import { readOrgSession, writeOrgSession } from '@/lib/org-session'
 
 function DashboardRoute() {
   const { organizationId } = useParams<{ organizationId: string }>()
   if (!organizationId) return <Navigate to="/" replace />
+  if (readOrgSession() !== organizationId) {
+    return <Navigate to="/" replace />
+  }
   return <DashboardShell organizationId={organizationId} />
 }
 
@@ -14,6 +18,7 @@ function LandingRoute() {
   return (
     <LandingPage
       onAuthenticated={(organizationId) => {
+        writeOrgSession(organizationId)
         navigate(`/dashboard/${organizationId}`)
       }}
     />

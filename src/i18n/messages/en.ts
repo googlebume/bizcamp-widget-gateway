@@ -12,6 +12,8 @@ export const en = {
   'common.localeUk': 'UA',
   'common.switchLanguage': 'Language',
   'common.backHome': 'Back to home',
+  'common.logout': 'Log out',
+  'common.copyUrl': 'Copy URL',
   'theme.toLight': 'Switch to light theme',
   'theme.toDark': 'Switch to dark theme',
 
@@ -185,6 +187,9 @@ export const en = {
   'widget.embed': 'Embed',
   'widget.embedBody':
     'Drop this script on pages under {domain}. Events are attributed by hostname.',
+  'widget.scriptUrl': 'Widget script URL',
+  'widget.scriptUrlHint':
+    'Same install as a host page: one script tag. Copy the URL or the full snippet.',
   'widget.usageMix': 'Usage mix',
   'widget.usageSubtitle': 'Event totals for this domain',
   'widget.lastDaysSuffix': ' · last {days} days',

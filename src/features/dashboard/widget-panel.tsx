@@ -7,7 +7,7 @@ import { useI18n } from '@/i18n/provider'
 import { useErrorCopy } from '@/lib/use-error-copy'
 import { toUserFacingError } from '@/lib/user-facing-error'
 import { formatDuration } from '@/lib/format-duration'
-import { getWidgetEmbedSnippet } from '@/lib/widget-embed'
+import { getWidgetEmbedSnippet, getWidgetScriptUrl } from '@/lib/widget-embed'
 
 type WidgetPanelProps = {
   domain: string
@@ -17,10 +17,13 @@ type WidgetPanelProps = {
 export function WidgetPanel({ domain, stats }: WidgetPanelProps) {
   const { t } = useI18n()
   const errorCopy = useErrorCopy()
-  const [copied, setCopied] = useState(false)
   const [copyError, setCopyError] = useState<string | null>(null)
 
+  const scriptUrl = useMemo(() => getWidgetScriptUrl(), [])
   const embedSnippet = useMemo(() => getWidgetEmbedSnippet(), [])
+  const [copiedTarget, setCopiedTarget] = useState<'url' | 'snippet' | null>(
+    null,
+  )
 
   const eventRows = useMemo(() => {
     if (!stats) return []
@@ -50,14 +53,17 @@ export function WidgetPanel({ domain, stats }: WidgetPanelProps) {
     ]
   }, [stats, t])
 
-  const copySnippet = async (): Promise<void> => {
+  const copyText = async (
+    value: string,
+    target: 'url' | 'snippet',
+  ): Promise<void> => {
     setCopyError(null)
     try {
-      await navigator.clipboard.writeText(embedSnippet)
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 2000)
+      await navigator.clipboard.writeText(value)
+      setCopiedTarget(target)
+      window.setTimeout(() => setCopiedTarget(null), 2000)
     } catch (error) {
-      setCopied(false)
+      setCopiedTarget(null)
       setCopyError(
         toUserFacingError(error, errorCopy('common.copyFailed')),
       )
@@ -79,17 +85,35 @@ export function WidgetPanel({ domain, stats }: WidgetPanelProps) {
           </code>
           {embedParts[1] ?? ''}
         </p>
+        <p className="mt-4 text-[13px] font-medium text-muted-foreground">
+          {t('widget.scriptUrl')}
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground text-pretty">
+          {t('widget.scriptUrlHint')}
+        </p>
+        <pre className="mt-3 overflow-x-auto rounded-xl border border-[color:var(--glass-stroke-outer)] bg-[color:var(--glass-recess)] p-4 text-xs leading-relaxed">
+          {scriptUrl}
+        </pre>
+        <Button
+          type="button"
+          variant="glass"
+          className="mt-3"
+          onClick={() => void copyText(scriptUrl, 'url')}
+        >
+          {copiedTarget === 'url' ? <Check /> : <Copy />}
+          {copiedTarget === 'url' ? t('common.copied') : t('common.copyUrl')}
+        </Button>
         <pre className="mt-5 overflow-x-auto rounded-xl border border-[color:var(--glass-stroke-outer)] bg-[color:var(--glass-recess)] p-4 text-xs leading-relaxed">
           {embedSnippet}
         </pre>
         <Button
           type="button"
           variant="glass"
-          className="mt-4"
-          onClick={() => void copySnippet()}
+          className="mt-3"
+          onClick={() => void copyText(embedSnippet, 'snippet')}
         >
-          {copied ? <Check /> : <Copy />}
-          {copied ? t('common.copied') : t('common.copySnippet')}
+          {copiedTarget === 'snippet' ? <Check /> : <Copy />}
+          {copiedTarget === 'snippet' ? t('common.copied') : t('common.copySnippet')}
         </Button>
         {copyError ? (
           <p className="mt-3 text-sm text-destructive" role="alert">

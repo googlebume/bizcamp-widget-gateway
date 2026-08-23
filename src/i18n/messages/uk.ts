@@ -15,6 +15,8 @@ export const uk: Record<MessageKey, string> = {
   'common.localeUk': 'UA',
   'common.switchLanguage': 'Мова',
   'common.backHome': 'На головну',
+  'common.logout': 'Вийти',
+  'common.copyUrl': 'Копіювати URL',
   'theme.toLight': 'Увімкнути світлу тему',
   'theme.toDark': 'Увімкнути темну тему',
 
@@ -191,6 +193,9 @@ export const uk: Record<MessageKey, string> = {
   'widget.embed': 'Вбудовування',
   'widget.embedBody':
     'Додайте цей скрипт на сторінки під {domain}. Події прив’язуються за hostname.',
+  'widget.scriptUrl': 'URL скрипта віджета',
+  'widget.scriptUrlHint':
+    'Таке саме підключення, як на хост-сторінці: один тег script. Скопіюйте URL або повний фрагмент.',
   'widget.usageMix': 'Структура використання',
   'widget.usageSubtitle': 'Підсумки подій для цього домену',
   'widget.lastDaysSuffix': ' · останні {days} дн.',

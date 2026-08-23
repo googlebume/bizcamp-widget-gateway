@@ -1,11 +1,12 @@
 import { useQuery } from 'convex/react'
 import {
   LayoutDashboard,
+  LogOut,
   Puzzle,
   Settings,
   Users,
 } from 'lucide-react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '@bizcamp-backend/_generated/api'
 import type { Id } from '@bizcamp-backend/_generated/dataModel'
 import { LiquidGlass } from '@/components/liquid-glass'
@@ -19,6 +20,7 @@ import { SettingsPanel } from '@/features/dashboard/settings-panel'
 import { WidgetPanel } from '@/features/dashboard/widget-panel'
 import { useI18n } from '@/i18n/provider'
 import type { MessageKey } from '@/i18n/messages/en'
+import { clearOrgSession } from '@/lib/org-session'
 import { cn } from '@/lib/utils'
 
 type DashboardTab = 'overview' | 'learners' | 'widget' | 'settings'
@@ -52,7 +54,11 @@ type NavProps = {
   onSelect: (tab: DashboardTab) => void
 }
 
-function DesktopAside({ activeTab, onSelect }: NavProps) {
+function DesktopAside({
+  activeTab,
+  onLogout,
+  onSelect,
+}: NavProps & { onLogout: () => void }) {
   const { t } = useI18n()
 
   return (
@@ -92,11 +98,21 @@ function DesktopAside({ activeTab, onSelect }: NavProps) {
           )
         })}
       </nav>
+
+      <Button
+        type="button"
+        variant="glass"
+        className="mt-8 w-full justify-start"
+        onClick={onLogout}
+      >
+        <LogOut />
+        {t('common.logout')}
+      </Button>
     </LiquidGlass>
   )
 }
 
-function MobileTopBar() {
+function MobileTopBar({ onLogout }: { onLogout: () => void }) {
   const { t } = useI18n()
 
   return (
@@ -110,6 +126,15 @@ function MobileTopBar() {
       <div className="flex items-center gap-2">
         <LocaleToggle />
         <ThemeToggle />
+        <Button
+          type="button"
+          variant="glass"
+          size="icon"
+          onClick={onLogout}
+          aria-label={t('common.logout')}
+        >
+          <LogOut />
+        </Button>
       </div>
     </div>
   )
@@ -167,10 +192,16 @@ function MobilePillTabBar({ activeTab, onSelect }: NavProps) {
 
 export function DashboardShell({ organizationId }: DashboardShellProps) {
   const { t, locale } = useI18n()
+  const navigate = useNavigate()
   const orgId = organizationId as Id<'organizations'>
   const [searchParams, setSearchParams] = useSearchParams()
   const tabParam = searchParams.get('tab')
   const activeTab: DashboardTab = isDashboardTab(tabParam) ? tabParam : 'overview'
+
+  const logout = (): void => {
+    clearOrgSession()
+    navigate('/', { replace: true })
+  }
 
   const org = useQuery(api.organizations.getById, {
     organizationId: orgId,
@@ -210,10 +241,10 @@ export function DashboardShell({ organizationId }: DashboardShellProps) {
   return (
     <div className="min-h-dvh">
       <div className="mx-auto flex min-h-dvh w-full max-w-[90rem] gap-5 p-4 pb-28 md:gap-6 md:p-7 md:pb-7">
-        <DesktopAside activeTab={activeTab} onSelect={setTab} />
+        <DesktopAside activeTab={activeTab} onLogout={logout} onSelect={setTab} />
 
         <div className="flex min-w-0 flex-1 flex-col gap-5 md:gap-6">
-          <MobileTopBar />
+          <MobileTopBar onLogout={logout} />
 
           <LiquidGlass className="p-6 md:p-8" intensity="strong">
             <p className="text-[13px] font-medium text-muted-foreground">
