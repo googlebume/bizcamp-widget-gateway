@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { Activity } from 'lucide-react'
 import { LiquidGlass } from '@/components/liquid-glass'
 import { useI18n } from '@/i18n/provider'
+import { formatDuration } from '@/lib/format-duration'
 
 export type DashboardStats = {
   activeLearners: number
@@ -33,6 +34,8 @@ export type DashboardStats = {
   }>
   sessions: number
   totalEvents: number
+  avgPageTimeMs: number
+  totalPageTimeMs: number
   widgetCloses: number
   widgetOpens: number
 }
@@ -199,6 +202,16 @@ export function OverviewPanel({ stats }: OverviewPanelProps) {
         <StatCard
           label={t('overview.totalEvents')}
           value={stats.totalEvents}
+        />
+        <StatCard
+          label={t('overview.pageTime')}
+          value={formatDuration(stats.totalPageTimeMs)}
+          hint={t('overview.pageTimeHint')}
+        />
+        <StatCard
+          label={t('overview.avgPageTime')}
+          value={formatDuration(stats.avgPageTimeMs)}
+          hint={t('overview.avgPageTimeHint')}
         />
       </div>
 

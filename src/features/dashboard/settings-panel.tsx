@@ -9,11 +9,10 @@ import { LiquidGlass } from '@/components/liquid-glass'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { DomainClaimForm } from '@/features/dashboard/domain-claim-form'
 import {
-  createDomainClaimSchema,
   createOrganizationPasswordSchema,
   createOrganizationProfileSchema,
-  type DomainClaimInput,
   type OrganizationPasswordInput,
   type OrganizationProfileInput,
 } from '@/features/registration/schema'
@@ -26,6 +25,10 @@ type OrganizationDetails = {
   createdAt: number
   domain?: string
   domainClaimedAt?: number
+  domainVerificationExpiresAt?: number
+  domainVerificationHost?: string
+  domainVerificationValue?: string
+  pendingDomain?: string
   phone: string
   workEmail: string
 }
@@ -43,13 +46,10 @@ export function SettingsPanel({
   const errorCopy = useErrorCopy()
   const orgId = organizationId as Id<'organizations'>
   const updateProfile = useMutation(api.organizations.updateProfile)
-  const updateDomain = useMutation(api.organizations.claimDomain)
   const updatePassword = useMutation(api.organizations.updatePassword)
 
   const [profileMessage, setProfileMessage] = useState<string | null>(null)
   const [profileError, setProfileError] = useState<string | null>(null)
-  const [domainMessage, setDomainMessage] = useState<string | null>(null)
-  const [domainError, setDomainError] = useState<string | null>(null)
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null)
   const [passwordError, setPasswordError] = useState<string | null>(null)
 
@@ -57,7 +57,6 @@ export function SettingsPanel({
     () => createOrganizationProfileSchema(t),
     [t],
   )
-  const domainSchema = useMemo(() => createDomainClaimSchema(t), [t])
   const passwordSchema = useMemo(
     () => createOrganizationPasswordSchema(t),
     [t],
@@ -69,13 +68,6 @@ export function SettingsPanel({
       companyName: organization.companyName,
       phone: organization.phone,
       workEmail: organization.workEmail,
-    },
-  })
-
-  const domainForm = useForm<DomainClaimInput>({
-    resolver: zodResolver(domainSchema),
-    defaultValues: {
-      domain: organization.domain ?? '',
     },
   })
 
@@ -94,13 +86,8 @@ export function SettingsPanel({
       phone: organization.phone,
       workEmail: organization.workEmail,
     })
-    domainForm.reset({
-      domain: organization.domain ?? '',
-    })
   }, [
-    domainForm,
     organization.companyName,
-    organization.domain,
     organization.phone,
     organization.workEmail,
     profileForm,
@@ -114,22 +101,6 @@ export function SettingsPanel({
       setProfileMessage(t('settings.profileSaved'))
     } catch (error) {
       setProfileError(toUserFacingError(error, errorCopy('settings.profileFailed')))
-    }
-  })
-
-  const onSaveDomain = domainForm.handleSubmit(async (values) => {
-    setDomainError(null)
-    setDomainMessage(null)
-    try {
-      const result = await updateDomain({
-        domain: values.domain,
-        organizationId: orgId,
-      })
-      setDomainMessage(
-        t('settings.domainUpdated', { domain: result.domain }),
-      )
-    } catch (error) {
-      setDomainError(toUserFacingError(error, errorCopy('settings.domainFailed')))
     }
   })
 
@@ -263,59 +234,18 @@ export function SettingsPanel({
           {t('settings.domainBody')}
         </p>
 
-        <form className="mt-6 max-w-md space-y-4" onSubmit={onSaveDomain} noValidate>
-          <div className="space-y-2">
-            <Label htmlFor="settingsDomain">{t('domain.label')}</Label>
-            <Input
-              id="settingsDomain"
-              placeholder={t('domain.placeholder')}
-              aria-invalid={Boolean(domainForm.formState.errors.domain)}
-              {...domainForm.register('domain')}
-            />
-            {domainForm.formState.errors.domain ? (
-              <p className="text-xs text-destructive" role="alert">
-                {domainForm.formState.errors.domain.message}
-              </p>
-            ) : organization.domainClaimedAt ? (
-              <p className="text-xs text-muted-foreground">
-                {t('settings.domainClaimSince', {
-                  date: new Date(organization.domainClaimedAt).toLocaleString(
-                    dateLocale,
-                  ),
-                })}
-              </p>
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                {t('settings.domainNone')}
-              </p>
-            )}
-          </div>
-
-          {domainError ? (
-            <p className="text-sm text-destructive" role="alert">
-              {domainError}
-            </p>
-          ) : null}
-          {domainMessage ? (
-            <p className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Check className="size-4" aria-hidden />
-              {domainMessage}
-            </p>
-          ) : null}
-
-          <Button type="submit" disabled={domainForm.formState.isSubmitting}>
-            {domainForm.formState.isSubmitting ? (
-              <>
-                <Loader2 className="animate-spin" />
-                {t('common.updating')}
-              </>
-            ) : organization.domain ? (
-              t('settings.updateDomain')
-            ) : (
-              t('settings.claimDomain')
-            )}
-          </Button>
-        </form>
+        <div className="mt-6 max-w-md">
+          <DomainClaimForm
+            organizationId={orgId}
+            verifiedDomain={organization.domain}
+            claimedAt={organization.domainClaimedAt}
+            pendingDomain={organization.pendingDomain}
+            txtHost={organization.domainVerificationHost}
+            txtValue={organization.domainVerificationValue}
+            expiresAt={organization.domainVerificationExpiresAt}
+            submitFullWidth={false}
+          />
+        </div>
       </LiquidGlass>
 
       <LiquidGlass className="p-6 md:p-7">

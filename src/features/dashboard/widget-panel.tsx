@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { useI18n } from '@/i18n/provider'
 import { useErrorCopy } from '@/lib/use-error-copy'
 import { toUserFacingError } from '@/lib/user-facing-error'
+import { formatDuration } from '@/lib/format-duration'
 import { getWidgetEmbedSnippet } from '@/lib/widget-embed'
 
 type WidgetPanelProps = {
@@ -37,6 +38,14 @@ export function WidgetPanel({ domain, stats }: WidgetPanelProps) {
       {
         label: t('widget.personalizationErrors'),
         value: stats.personalizationErrors,
+      },
+      {
+        label: t('widget.pageTime'),
+        value: formatDuration(stats.totalPageTimeMs),
+      },
+      {
+        label: t('widget.avgPageTime'),
+        value: formatDuration(stats.avgPageTimeMs),
       },
     ]
   }, [stats, t])

@@ -273,6 +273,10 @@ export function DashboardShell({ organizationId }: DashboardShellProps) {
                 <DomainClaimForm
                   key={locale}
                   organizationId={orgId}
+                  pendingDomain={org.pendingDomain}
+                  txtHost={org.domainVerificationHost}
+                  txtValue={org.domainVerificationValue}
+                  expiresAt={org.domainVerificationExpiresAt}
                   onClaimed={() => undefined}
                 />
               </div>

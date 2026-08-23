@@ -109,7 +109,7 @@ export const en = {
   'dashboard.loadingOrg': 'Loading organization…',
   'dashboard.claimTitle': 'Claim your domain',
   'dashboard.claimBody':
-    'Enter the hostname where learners open the widget. Analytics for that origin stream into this dashboard.',
+    'Enter the hostname where learners open the widget, then prove you control it with a DNS TXT record so nobody else can take it.',
   'dashboard.loadingAnalytics': 'Loading analytics…',
   'dashboard.claimFirst': 'Claim a domain first to open this section.',
 
@@ -118,8 +118,19 @@ export const en = {
   'domain.hint':
     'Widget usage on this hostname will appear in your dashboard. Use {localhost} for the local demo.',
   'domain.linking': 'Linking domain…',
-  'domain.openDashboard': 'Open dashboard',
+  'domain.openDashboard': 'Continue',
   'domain.saveFailed': 'Could not save domain. Try again.',
+  'domain.challengeTitle': 'Prove you control this domain',
+  'domain.challengeBody':
+    'Add this TXT record at your DNS provider for {domain}. Until it verifies, another company cannot finish a claim on this hostname.',
+  'domain.txtHost': 'Host',
+  'domain.txtValue': 'Value',
+  'domain.txtTypeHint': 'Record type: TXT. DNS changes can take a few minutes to appear.',
+  'domain.checkingDns': 'Checking DNS…',
+  'domain.verifyTxt': 'Verify TXT record',
+  'domain.changeDomain': 'Use a different domain',
+  'domain.verifyFailed':
+    'TXT record not found yet. Add it, wait for DNS, then try again.',
 
   'overview.activeLearners': 'Active learners',
   'overview.activeLearnersHint': 'Unique authenticated sessions',
@@ -131,6 +142,10 @@ export const en = {
   'overview.personalizations': 'Personalizations',
   'overview.errors': '{count} errors',
   'overview.totalEvents': 'Total events',
+  'overview.pageTime': 'Time on page',
+  'overview.pageTimeHint': 'Visible time with the widget loaded',
+  'overview.avgPageTime': 'Avg time / user',
+  'overview.avgPageTimeHint': 'Mean visible time per learner',
   'overview.activity': 'Activity · {days}d',
   'overview.modeAdoption': 'Mode adoption',
   'overview.localeSwitches': 'Locale switches',
@@ -159,6 +174,7 @@ export const en = {
   'learners.avgSessions': 'Avg sessions',
   'learners.avgOpens': 'Avg opens',
   'learners.avgPersonalizations': 'Avg personalizations',
+  'learners.avgPageTime': 'Avg time on page',
   'learners.perLearner': 'Per learner',
   'learners.calibrationStatus': 'Calibration status',
   'learners.lastMode': 'Last chosen mode',
@@ -182,6 +198,8 @@ export const en = {
   'widget.personalizationErrors': 'Personalization errors',
   'widget.modeAdoption': 'Mode adoption',
   'widget.localeSwitches': 'Locale switches',
+  'widget.pageTime': 'Time on page',
+  'widget.avgPageTime': 'Avg time / user',
 
   'settings.orgTitle': 'Organization',
   'settings.orgBody': 'Edit workspace identity and contact details',
@@ -192,7 +210,7 @@ export const en = {
   'settings.profileFailed': 'Could not save profile.',
   'settings.domainTitle': 'Domain',
   'settings.domainBody':
-    'Change the hostname used for widget analytics. A domain can belong to only one organization.',
+    'Change the hostname used for widget analytics. Public domains require a TXT record, so only your team can claim them.',
   'settings.domainClaimSince': 'Current claim since {date}',
   'settings.domainNone': 'No domain linked yet.',
   'settings.updateDomain': 'Update domain',

@@ -113,7 +113,7 @@ export const uk: Record<MessageKey, string> = {
   'dashboard.loadingOrg': 'Завантаження організації…',
   'dashboard.claimTitle': 'Заявіть свій домен',
   'dashboard.claimBody':
-    'Вкажіть hostname, де учні відкривають віджет. Аналітика з цього origin з’явиться в цій панелі.',
+    'Вкажіть hostname, де учні відкривають віджет, і підтвердіть його TXT-записом у DNS, щоб ніхто інший не міг його зайняти.',
   'dashboard.loadingAnalytics': 'Завантаження аналітики…',
   'dashboard.claimFirst': 'Спочатку заявіть домен, щоб відкрити цей розділ.',
 
@@ -122,8 +122,20 @@ export const uk: Record<MessageKey, string> = {
   'domain.hint':
     'Використання віджета на цьому hostname з’явиться в панелі. Для локального демо використовуйте {localhost}.',
   'domain.linking': 'Прив’язка домену…',
-  'domain.openDashboard': 'Відкрити панель',
+  'domain.openDashboard': 'Продовжити',
   'domain.saveFailed': 'Не вдалося зберегти домен. Спробуйте ще раз.',
+  'domain.challengeTitle': 'Підтвердіть, що ви керуєте цим доменом',
+  'domain.challengeBody':
+    'Додайте цей TXT-запис у DNS для {domain}. Поки його не підтверджено, інша компанія не зможе завершити заявку на цей hostname.',
+  'domain.txtHost': 'Хост',
+  'domain.txtValue': 'Значення',
+  'domain.txtTypeHint':
+    'Тип запису: TXT. Зміни DNS можуть з’явитися за кілька хвилин.',
+  'domain.checkingDns': 'Перевірка DNS…',
+  'domain.verifyTxt': 'Перевірити TXT-запис',
+  'domain.changeDomain': 'Інший домен',
+  'domain.verifyFailed':
+    'TXT-запис ще не знайдено. Додайте його, зачекайте на DNS і спробуйте ще раз.',
 
   'overview.activeLearners': 'Активні учні',
   'overview.activeLearnersHint': 'Унікальні автентифіковані сесії',
@@ -135,6 +147,10 @@ export const uk: Record<MessageKey, string> = {
   'overview.personalizations': 'Персоналізації',
   'overview.errors': '{count} помилок',
   'overview.totalEvents': 'Усього подій',
+  'overview.pageTime': 'Час на сторінці',
+  'overview.pageTimeHint': 'Видимий час, поки віджет завантажений',
+  'overview.avgPageTime': 'Сер. час / користувач',
+  'overview.avgPageTimeHint': 'Середній видимий час на учня',
   'overview.activity': 'Активність · {days} дн.',
   'overview.modeAdoption': 'Вибір режимів',
   'overview.localeSwitches': 'Перемикання мови',
@@ -164,6 +180,7 @@ export const uk: Record<MessageKey, string> = {
   'learners.avgSessions': 'Сер. сесії',
   'learners.avgOpens': 'Сер. відкриття',
   'learners.avgPersonalizations': 'Сер. персоналізації',
+  'learners.avgPageTime': 'Сер. час на сторінці',
   'learners.perLearner': 'На учня',
   'learners.calibrationStatus': 'Статус калібрування',
   'learners.lastMode': 'Останній обраний режим',
@@ -187,6 +204,8 @@ export const uk: Record<MessageKey, string> = {
   'widget.personalizationErrors': 'Помилки персоналізації',
   'widget.modeAdoption': 'Вибір режимів',
   'widget.localeSwitches': 'Перемикання мови',
+  'widget.pageTime': 'Час на сторінці',
+  'widget.avgPageTime': 'Сер. час / користувач',
 
   'settings.orgTitle': 'Організація',
   'settings.orgBody': 'Редагуйте назву робочого простору та контакти',
@@ -197,7 +216,7 @@ export const uk: Record<MessageKey, string> = {
   'settings.profileFailed': 'Не вдалося зберегти профіль.',
   'settings.domainTitle': 'Домен',
   'settings.domainBody':
-    'Змініть hostname для аналітики віджета. Один домен може належати лише одній організації.',
+    'Змініть hostname для аналітики віджета. Публічні домени потребують TXT-запису, тож заявити їх може лише ваша команда.',
   'settings.domainClaimSince': 'Поточна заявка з {date}',
   'settings.domainNone': 'Домен ще не прив’язано.',
   'settings.updateDomain': 'Оновити домен',

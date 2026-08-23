@@ -1,9 +1,10 @@
+import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation } from 'convex/react'
-import { useMemo, useState } from 'react'
-import { Loader2 } from 'lucide-react'
+import { useAction, useMutation } from 'convex/react'
+import { Check, Copy, Loader2 } from 'lucide-react'
 import { api } from '@bizcamp-backend/_generated/api'
+import type { Id } from '@bizcamp-backend/_generated/dataModel'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,103 +15,295 @@ import {
 import { useI18n } from '@/i18n/provider'
 import { useErrorCopy } from '@/lib/use-error-copy'
 import { toUserFacingError } from '@/lib/user-facing-error'
-import type { Id } from '@bizcamp-backend/_generated/dataModel'
+
+type DomainChallenge = {
+  domain: string
+  expiresAt?: number
+  txtHost: string
+  txtValue: string
+}
 
 type DomainClaimFormProps = {
+  claimedAt?: number
+  expiresAt?: number
+  onClaimed?: (domain: string) => void
   organizationId: Id<'organizations'>
-  onClaimed: (domain: string) => void
+  pendingDomain?: string
+  submitFullWidth?: boolean
+  txtHost?: string
+  txtValue?: string
+  verifiedDomain?: string
 }
 
 export function DomainClaimForm({
-  organizationId,
+  claimedAt,
+  expiresAt,
   onClaimed,
+  organizationId,
+  pendingDomain,
+  submitFullWidth = true,
+  txtHost,
+  txtValue,
+  verifiedDomain,
 }: DomainClaimFormProps) {
-  const { t } = useI18n()
+  const { t, dateLocale } = useI18n()
   const errorCopy = useErrorCopy()
-  const claimDomain = useMutation(api.organizations.claimDomain)
+  const beginClaim = useMutation(api.organizations.beginDomainClaim)
+  const verifyClaim = useAction(api.verifyDomain.verifyDomainClaim)
   const seedDemo = useMutation(api.seedDemo.seedDemoIfEmpty)
   const [serverError, setServerError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [challenge, setChallenge] = useState<DomainChallenge | null>(null)
+  const [verifying, setVerifying] = useState(false)
+  const [copiedField, setCopiedField] = useState<'host' | 'value' | null>(
+    null,
+  )
   const schema = useMemo(() => createDomainClaimSchema(t), [t])
 
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<DomainClaimInput>({
     resolver: zodResolver(schema),
     defaultValues: {
-      domain: '',
+      domain: pendingDomain ?? verifiedDomain ?? '',
     },
   })
 
+  useEffect(() => {
+    if (pendingDomain && txtHost && txtValue) {
+      setChallenge({
+        domain: pendingDomain,
+        expiresAt,
+        txtHost,
+        txtValue,
+      })
+      reset({ domain: pendingDomain })
+      return
+    }
+    if (!pendingDomain) {
+      setChallenge(null)
+    }
+  }, [expiresAt, pendingDomain, reset, txtHost, txtValue])
+
+  const finishClaim = async (domain: string): Promise<void> => {
+    try {
+      await seedDemo({ domain, organizationId })
+    } catch (seedError) {
+      console.warn('[Bizcamp] Demo seed skipped', seedError)
+    }
+    setChallenge(null)
+    setSuccessMessage(t('settings.domainUpdated', { domain }))
+    onClaimed?.(domain)
+  }
+
   const onSubmit = handleSubmit(async (values) => {
     setServerError(null)
+    setSuccessMessage(null)
     try {
-      const result = await claimDomain({
+      const result = await beginClaim({
         domain: values.domain,
         organizationId,
       })
-      try {
-        await seedDemo({
-          domain: result.domain,
-          organizationId,
-        })
-      } catch (seedError) {
-        console.warn('[Bizcamp] Demo seed skipped', seedError)
+      if (result.verified) {
+        await finishClaim(result.domain)
+        return
       }
-      onClaimed(result.domain)
+      if (!result.txtHost || !result.txtValue) {
+        throw new Error(t('domain.verifyFailed'))
+      }
+      setChallenge({
+        domain: result.domain,
+        expiresAt: result.expiresAt,
+        txtHost: result.txtHost,
+        txtValue: result.txtValue,
+      })
     } catch (error) {
       setServerError(toUserFacingError(error, errorCopy('domain.saveFailed')))
     }
   })
+
+  const onVerify = async (): Promise<void> => {
+    setServerError(null)
+    setVerifying(true)
+    try {
+      const result = await verifyClaim({ organizationId })
+      await finishClaim(result.domain)
+    } catch (error) {
+      setServerError(toUserFacingError(error, errorCopy('domain.verifyFailed')))
+    } finally {
+      setVerifying(false)
+    }
+  }
+
+  const copyValue = async (
+    field: 'host' | 'value',
+    value: string,
+  ): Promise<void> => {
+    try {
+      await navigator.clipboard.writeText(value)
+      setCopiedField(field)
+      window.setTimeout(() => setCopiedField(null), 2000)
+    } catch (error) {
+      setServerError(toUserFacingError(error, errorCopy('common.copyFailed')))
+    }
+  }
 
   const hintParts = t('domain.hint', { localhost: 'localhost' }).split(
     'localhost',
   )
 
   return (
-    <form className="space-y-4" onSubmit={onSubmit} noValidate>
-      <div className="space-y-2">
-        <Label htmlFor="domain">{t('domain.label')}</Label>
-        <Input
-          id="domain"
-          type="text"
-          autoComplete="url"
-          placeholder={t('domain.placeholder')}
-          aria-invalid={Boolean(errors.domain)}
-          {...register('domain')}
-        />
-        {errors.domain ? (
-          <p className="text-xs text-destructive" role="alert">
-            {errors.domain.message}
+    <div className="space-y-4">
+      {verifiedDomain ? (
+        <p className="text-sm text-muted-foreground">
+          {claimedAt
+            ? t('settings.domainClaimSince', {
+                date: new Date(claimedAt).toLocaleString(dateLocale),
+              })
+            : t('settings.domainNone')}
+        </p>
+      ) : null}
+
+      {challenge ? (
+        <div className="space-y-3 rounded-xl border border-[color:var(--glass-stroke-outer)] bg-[color:var(--glass-recess)] p-4">
+          <p className="text-sm font-medium tracking-tight">
+            {t('domain.challengeTitle')}
           </p>
-        ) : (
-          <p className="text-xs leading-relaxed text-muted-foreground text-pretty">
-            {hintParts[0]}
-            <code className="rounded bg-[color:var(--glass-recess)] px-1 py-0.5">
-              localhost
-            </code>
-            {hintParts[1] ?? ''}
+          <p className="text-sm leading-relaxed text-muted-foreground text-pretty">
+            {t('domain.challengeBody', { domain: challenge.domain })}
           </p>
-        )}
-      </div>
+          <TxtCopyRow
+            copied={copiedField === 'host'}
+            label={t('domain.txtHost')}
+            onCopy={() => void copyValue('host', challenge.txtHost)}
+            value={challenge.txtHost}
+          />
+          <TxtCopyRow
+            copied={copiedField === 'value'}
+            label={t('domain.txtValue')}
+            onCopy={() => void copyValue('value', challenge.txtValue)}
+            value={challenge.txtValue}
+          />
+          <p className="text-xs text-muted-foreground">
+            {t('domain.txtTypeHint')}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              disabled={verifying}
+              onClick={() => void onVerify()}
+            >
+              {verifying ? (
+                <>
+                  <Loader2 className="animate-spin" />
+                  {t('domain.checkingDns')}
+                </>
+              ) : (
+                t('domain.verifyTxt')
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setChallenge(null)
+                setServerError(null)
+              }}
+            >
+              {t('domain.changeDomain')}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <form className="space-y-4" onSubmit={onSubmit} noValidate>
+          <div className="space-y-2">
+            <Label htmlFor="domain">{t('domain.label')}</Label>
+            <Input
+              id="domain"
+              type="text"
+              autoComplete="url"
+              placeholder={t('domain.placeholder')}
+              aria-invalid={Boolean(errors.domain)}
+              {...register('domain')}
+            />
+            {errors.domain ? (
+              <p className="text-xs text-destructive" role="alert">
+                {errors.domain.message}
+              </p>
+            ) : (
+              <p className="text-xs leading-relaxed text-muted-foreground text-pretty">
+                {hintParts[0]}
+                <code className="rounded bg-[color:var(--glass-recess)] px-1 py-0.5">
+                  localhost
+                </code>
+                {hintParts[1] ?? ''}
+              </p>
+            )}
+          </div>
+          <Button
+            type="submit"
+            className={submitFullWidth ? 'w-full' : undefined}
+            size={submitFullWidth ? 'lg' : 'default'}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="animate-spin" />
+                {t('domain.linking')}
+              </>
+            ) : verifiedDomain ? (
+              t('settings.updateDomain')
+            ) : (
+              t('domain.openDashboard')
+            )}
+          </Button>
+        </form>
+      )}
 
       {serverError ? (
         <p className="text-sm text-destructive" role="alert">
           {serverError}
         </p>
       ) : null}
+      {successMessage ? (
+        <p className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Check className="size-4" aria-hidden />
+          {successMessage}
+        </p>
+      ) : null}
+    </div>
+  )
+}
 
-      <Button type="submit" className="mt-2 w-full" size="lg" disabled={isSubmitting}>
-        {isSubmitting ? (
-          <>
-            <Loader2 className="animate-spin" />
-            {t('domain.linking')}
-          </>
-        ) : (
-          t('domain.openDashboard')
-        )}
-      </Button>
-    </form>
+function TxtCopyRow({
+  copied,
+  label,
+  onCopy,
+  value,
+}: {
+  copied: boolean
+  label: string
+  onCopy: () => void
+  value: string
+}) {
+  const { t } = useI18n()
+  return (
+    <div className="space-y-1">
+      <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/80">
+        {label}
+      </p>
+      <div className="flex items-center gap-2">
+        <code className="min-w-0 flex-1 truncate rounded-lg border border-[color:var(--glass-stroke-outer)] bg-background/40 px-2.5 py-2 text-xs">
+          {value}
+        </code>
+        <Button type="button" variant="glass" size="sm" onClick={onCopy}>
+          {copied ? <Check /> : <Copy />}
+          {copied ? t('common.copied') : t('common.copySnippet')}
+        </Button>
+      </div>
+    </div>
   )
 }

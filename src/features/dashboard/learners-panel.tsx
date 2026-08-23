@@ -3,6 +3,7 @@ import { api } from '@bizcamp-backend/_generated/api'
 import type { Id } from '@bizcamp-backend/_generated/dataModel'
 import { LiquidGlass } from '@/components/liquid-glass'
 import { useI18n } from '@/i18n/provider'
+import { formatDuration } from '@/lib/format-duration'
 
 type LearnersPanelProps = {
   domain: string
@@ -178,6 +179,11 @@ export function LearnersPanel({ domain, organizationId }: LearnersPanelProps) {
             <StatCard
               label={t('learners.avgPersonalizations')}
               value={formatAvg(data.avgPersonalizations)}
+              hint={t('learners.perLearner')}
+            />
+            <StatCard
+              label={t('learners.avgPageTime')}
+              value={formatDuration(data.avgPageTimeMs)}
               hint={t('learners.perLearner')}
             />
           </div>
