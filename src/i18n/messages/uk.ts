@@ -112,10 +112,16 @@ export const uk: Record<MessageKey, string> = {
   'dashboard.phone': 'Телефон',
   'dashboard.domain': 'Домен',
   'dashboard.domainNotLinked': 'Ще не прив’язано',
+  'dashboard.domainPending': '{domain} · не підтверджено',
   'dashboard.loadingOrg': 'Завантаження організації…',
   'dashboard.claimTitle': 'Заявіть свій домен',
   'dashboard.claimBody':
     'Вкажіть hostname, де учні відкривають віджет, і підтвердіть його TXT-записом у DNS, щоб ніхто інший не міг його зайняти.',
+  'dashboard.pendingVerifyBanner':
+    'TXT-підтвердження для {domain} ще очікує. Завершіть його будь-коли в Налаштуваннях.',
+  'dashboard.pendingVerifyAction': 'Відкрити Налаштування',
+  'dashboard.claimLaterBanner':
+    'Домен можна додати пізніше. Прив’яжіть і підтвердіть його в Налаштуваннях, коли будете готові.',
   'dashboard.loadingAnalytics': 'Завантаження аналітики…',
   'dashboard.claimFirst': 'Спочатку заявіть домен, щоб відкрити цей розділ.',
 
@@ -136,6 +142,9 @@ export const uk: Record<MessageKey, string> = {
   'domain.checkingDns': 'Перевірка DNS…',
   'domain.verifyTxt': 'Перевірити TXT-запис',
   'domain.changeDomain': 'Інший домен',
+  'domain.skipForNow': 'Пропустити зараз',
+  'domain.skipHint':
+    'TXT-підтвердження можна завершити пізніше в Налаштуваннях. Незавершені челенджі зберігаються.',
   'domain.verifyFailed':
     'TXT-запис ще не знайдено. Додайте його, зачекайте на DNS і спробуйте ще раз.',
 
@@ -222,6 +231,8 @@ export const uk: Record<MessageKey, string> = {
   'settings.domainTitle': 'Домен',
   'settings.domainBody':
     'Змініть hostname для аналітики віджета. Публічні домени потребують TXT-запису, тож заявити їх може лише ваша команда.',
+  'settings.domainPendingBody':
+    'Завершіть TXT-підтвердження для {domain} тут або почніть нову заявку. Поки домен не підтверджено, аналітика прив’язана лише до верифікованого hostname.',
   'settings.domainClaimSince': 'Поточна заявка з {date}',
   'settings.domainNone': 'Домен ще не прив’язано.',
   'settings.updateDomain': 'Оновити домен',

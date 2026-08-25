@@ -108,10 +108,16 @@ export const en = {
   'dashboard.phone': 'Phone',
   'dashboard.domain': 'Domain',
   'dashboard.domainNotLinked': 'Not linked yet',
+  'dashboard.domainPending': '{domain} · unverified',
   'dashboard.loadingOrg': 'Loading organization…',
   'dashboard.claimTitle': 'Claim your domain',
   'dashboard.claimBody':
     'Enter the hostname where learners open the widget, then prove you control it with a DNS TXT record so nobody else can take it.',
+  'dashboard.pendingVerifyBanner':
+    'TXT verification for {domain} is still pending. Finish it anytime in Settings.',
+  'dashboard.pendingVerifyAction': 'Open Settings',
+  'dashboard.claimLaterBanner':
+    'Domain is optional for now. Link and verify it anytime in Settings when you are ready.',
   'dashboard.loadingAnalytics': 'Loading analytics…',
   'dashboard.claimFirst': 'Claim a domain first to open this section.',
 
@@ -131,6 +137,9 @@ export const en = {
   'domain.checkingDns': 'Checking DNS…',
   'domain.verifyTxt': 'Verify TXT record',
   'domain.changeDomain': 'Use a different domain',
+  'domain.skipForNow': 'Skip for now',
+  'domain.skipHint':
+    'You can finish TXT verification later in Settings. Pending challenges stay saved.',
   'domain.verifyFailed':
     'TXT record not found yet. Add it, wait for DNS, then try again.',
 
@@ -216,6 +225,8 @@ export const en = {
   'settings.domainTitle': 'Domain',
   'settings.domainBody':
     'Change the hostname used for widget analytics. Public domains require a TXT record, so only your team can claim them.',
+  'settings.domainPendingBody':
+    'Finish TXT verification for {domain} here, or start a new claim. Until it verifies, analytics stay locked to a verified hostname.',
   'settings.domainClaimSince': 'Current claim since {date}',
   'settings.domainNone': 'No domain linked yet.',
   'settings.updateDomain': 'Update domain',

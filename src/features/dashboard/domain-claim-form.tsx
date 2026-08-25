@@ -24,9 +24,11 @@ type DomainChallenge = {
 }
 
 type DomainClaimFormProps = {
+  allowSkip?: boolean
   claimedAt?: number
   expiresAt?: number
   onClaimed?: (domain: string) => void
+  onSkip?: () => void
   organizationId: Id<'organizations'>
   pendingDomain?: string
   submitFullWidth?: boolean
@@ -36,9 +38,11 @@ type DomainClaimFormProps = {
 }
 
 export function DomainClaimForm({
+  allowSkip = false,
   claimedAt,
   expiresAt,
   onClaimed,
+  onSkip,
   organizationId,
   pendingDomain,
   submitFullWidth = true,
@@ -215,7 +219,17 @@ export function DomainClaimForm({
             >
               {t('domain.changeDomain')}
             </Button>
+            {allowSkip && onSkip ? (
+              <Button type="button" variant="ghost" onClick={onSkip}>
+                {t('domain.skipForNow')}
+              </Button>
+            ) : null}
           </div>
+          {allowSkip ? (
+            <p className="text-xs text-muted-foreground text-pretty">
+              {t('domain.skipHint')}
+            </p>
+          ) : null}
         </div>
       ) : (
         <form className="space-y-4" onSubmit={onSubmit} noValidate>
@@ -243,23 +257,40 @@ export function DomainClaimForm({
               </p>
             )}
           </div>
-          <Button
-            type="submit"
-            className={submitFullWidth ? 'w-full' : undefined}
-            size={submitFullWidth ? 'lg' : 'default'}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="animate-spin" />
-                {t('domain.linking')}
-              </>
-            ) : verifiedDomain ? (
-              t('settings.updateDomain')
-            ) : (
-              t('domain.openDashboard')
-            )}
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="submit"
+              className={submitFullWidth ? 'w-full' : undefined}
+              size={submitFullWidth ? 'lg' : 'default'}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="animate-spin" />
+                  {t('domain.linking')}
+                </>
+              ) : verifiedDomain ? (
+                t('settings.updateDomain')
+              ) : (
+                t('domain.openDashboard')
+              )}
+            </Button>
+            {allowSkip && onSkip && !verifiedDomain ? (
+              <Button
+                type="button"
+                variant="ghost"
+                className={submitFullWidth ? 'w-full' : undefined}
+                onClick={onSkip}
+              >
+                {t('domain.skipForNow')}
+              </Button>
+            ) : null}
+          </div>
+          {allowSkip && !verifiedDomain ? (
+            <p className="text-xs text-muted-foreground text-pretty">
+              {t('domain.skipHint')}
+            </p>
+          ) : null}
         </form>
       )}
 

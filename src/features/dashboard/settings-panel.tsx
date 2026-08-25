@@ -231,7 +231,11 @@ export function SettingsPanel({
           {t('settings.domainTitle')}
         </h2>
         <p className="mt-1 text-sm text-muted-foreground text-pretty">
-          {t('settings.domainBody')}
+          {organization.pendingDomain && !organization.domain
+            ? t('settings.domainPendingBody', {
+                domain: organization.pendingDomain,
+              })
+            : t('settings.domainBody')}
         </p>
 
         <div className="mt-6 max-w-md">

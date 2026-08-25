@@ -6,6 +6,7 @@ import {
   Settings,
   Users,
 } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '@bizcamp-backend/_generated/api'
 import type { Id } from '@bizcamp-backend/_generated/dataModel'
@@ -43,6 +44,28 @@ function isDashboardTab(value: string | null): value is DashboardTab {
     value === 'widget' ||
     value === 'settings'
   )
+}
+
+function claimDismissStorageKey(organizationId: string): string {
+  return `bizcamp:domain-claim-dismissed:${organizationId}`
+}
+
+function readClaimDismissed(organizationId: string): boolean {
+  try {
+    return sessionStorage.getItem(claimDismissStorageKey(organizationId)) === '1'
+  } catch {
+    return false
+  }
+}
+
+function writeClaimDismissed(organizationId: string, dismissed: boolean): void {
+  try {
+    const key = claimDismissStorageKey(organizationId)
+    if (dismissed) sessionStorage.setItem(key, '1')
+    else sessionStorage.removeItem(key)
+  } catch {
+    /* ignore quota / private mode */
+  }
 }
 
 type DashboardShellProps = {
@@ -197,6 +220,9 @@ export function DashboardShell({ organizationId }: DashboardShellProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const tabParam = searchParams.get('tab')
   const activeTab: DashboardTab = isDashboardTab(tabParam) ? tabParam : 'overview'
+  const [claimSkipped, setClaimSkipped] = useState(() =>
+    readClaimDismissed(organizationId),
+  )
 
   const logout = (): void => {
     clearOrgSession()
@@ -213,11 +239,23 @@ export function DashboardShell({ organizationId }: DashboardShellProps) {
       : 'skip',
   )
 
+  useEffect(() => {
+    if (org?.domain) {
+      writeClaimDismissed(organizationId, false)
+      setClaimSkipped(false)
+    }
+  }, [org?.domain, organizationId])
+
   const setTab = (next: DashboardTab): void => {
     const params = new URLSearchParams(searchParams)
     if (next === 'overview') params.delete('tab')
     else params.set('tab', next)
     setSearchParams(params, { replace: true })
+  }
+
+  const skipDomainClaim = (): void => {
+    writeClaimDismissed(organizationId, true)
+    setClaimSkipped(true)
   }
 
   if (org === null) {
@@ -237,6 +275,21 @@ export function DashboardShell({ organizationId }: DashboardShellProps) {
       </div>
     )
   }
+
+  const showClaimCard =
+    Boolean(org) && !org?.domain && !claimSkipped && activeTab === 'overview'
+  const showPendingBanner =
+    Boolean(org) &&
+    !org?.domain &&
+    claimSkipped &&
+    Boolean(org?.pendingDomain) &&
+    activeTab === 'overview'
+  const showSkippedNoDomainBanner =
+    Boolean(org) &&
+    !org?.domain &&
+    claimSkipped &&
+    !org?.pendingDomain &&
+    activeTab === 'overview'
 
   return (
     <div className="min-h-dvh">
@@ -279,7 +332,13 @@ export function DashboardShell({ organizationId }: DashboardShellProps) {
                     {t('dashboard.domain')}
                   </dt>
                   <dd className="mt-1 font-medium tracking-tight">
-                    {org.domain ?? t('dashboard.domainNotLinked')}
+                    {org.domain
+                      ? org.domain
+                      : org.pendingDomain
+                        ? t('dashboard.domainPending', {
+                            domain: org.pendingDomain,
+                          })
+                        : t('dashboard.domainNotLinked')}
                   </dd>
                 </div>
               </dl>
@@ -290,7 +349,41 @@ export function DashboardShell({ organizationId }: DashboardShellProps) {
             )}
           </LiquidGlass>
 
-          {org && !org.domain ? (
+          {showPendingBanner && org?.pendingDomain ? (
+            <LiquidGlass className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between md:p-6">
+              <p className="text-sm leading-relaxed text-pretty text-muted-foreground">
+                {t('dashboard.pendingVerifyBanner', {
+                  domain: org.pendingDomain,
+                })}
+              </p>
+              <Button
+                type="button"
+                variant="glass"
+                className="shrink-0"
+                onClick={() => setTab('settings')}
+              >
+                {t('dashboard.pendingVerifyAction')}
+              </Button>
+            </LiquidGlass>
+          ) : null}
+
+          {showSkippedNoDomainBanner ? (
+            <LiquidGlass className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between md:p-6">
+              <p className="text-sm leading-relaxed text-pretty text-muted-foreground">
+                {t('dashboard.claimLaterBanner')}
+              </p>
+              <Button
+                type="button"
+                variant="glass"
+                className="shrink-0"
+                onClick={() => setTab('settings')}
+              >
+                {t('dashboard.pendingVerifyAction')}
+              </Button>
+            </LiquidGlass>
+          ) : null}
+
+          {showClaimCard && org ? (
             <LiquidGlass className="p-6 md:p-8" intensity="strong">
               <div className="mb-6 max-w-xl space-y-2">
                 <h2 className="text-xl font-semibold tracking-tight">
@@ -303,12 +396,14 @@ export function DashboardShell({ organizationId }: DashboardShellProps) {
               <div className="max-w-md">
                 <DomainClaimForm
                   key={locale}
+                  allowSkip
                   organizationId={orgId}
                   pendingDomain={org.pendingDomain}
                   txtHost={org.domainVerificationHost}
                   txtValue={org.domainVerificationValue}
                   expiresAt={org.domainVerificationExpiresAt}
                   onClaimed={() => undefined}
+                  onSkip={skipDomainClaim}
                 />
               </div>
             </LiquidGlass>
