@@ -1,5 +1,7 @@
 import { useQuery } from 'convex/react'
 import {
+  Building2,
+  Globe2,
   LayoutDashboard,
   LogOut,
   Puzzle,
@@ -10,7 +12,6 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '@bizcamp-backend/_generated/api'
 import type { Id } from '@bizcamp-backend/_generated/dataModel'
-import { LiquidGlass } from '@/components/liquid-glass'
 import { LocaleToggle } from '@/components/locale-toggle'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { Button } from '@/components/ui/button'
@@ -27,10 +28,26 @@ import { cn } from '@/lib/utils'
 type DashboardTab = 'overview' | 'learners' | 'widget' | 'settings'
 
 const navItems = [
-  { id: 'overview', labelKey: 'nav.overview', icon: LayoutDashboard },
-  { id: 'learners', labelKey: 'nav.learners', icon: Users },
-  { id: 'widget', labelKey: 'nav.widget', icon: Puzzle },
-  { id: 'settings', labelKey: 'nav.settings', icon: Settings },
+  {
+    id: 'overview',
+    labelKey: 'nav.overview',
+    icon: LayoutDashboard,
+  },
+  {
+    id: 'learners',
+    labelKey: 'nav.learners',
+    icon: Users,
+  },
+  {
+    id: 'widget',
+    labelKey: 'nav.widget',
+    icon: Puzzle,
+  },
+  {
+    id: 'settings',
+    labelKey: 'nav.settings',
+    icon: Settings,
+  },
 ] as const satisfies ReadonlyArray<{
   id: DashboardTab
   labelKey: MessageKey
@@ -38,12 +55,7 @@ const navItems = [
 }>
 
 function isDashboardTab(value: string | null): value is DashboardTab {
-  return (
-    value === 'overview' ||
-    value === 'learners' ||
-    value === 'widget' ||
-    value === 'settings'
-  )
+  return navItems.some((item) => item.id === value)
 }
 
 function claimDismissStorageKey(organizationId: string): string {
@@ -77,6 +89,42 @@ type NavProps = {
   onSelect: (tab: DashboardTab) => void
 }
 
+function BrandMark() {
+  const { t } = useI18n()
+
+  return (
+    <div className="flex h-10 items-center">
+      <p className="truncate text-[17px] font-semibold leading-none tracking-[-0.04em]">
+        {t('common.adminBrand')}
+      </p>
+    </div>
+  )
+}
+
+function DashboardNav({ activeTab, onSelect }: NavProps) {
+  const { t } = useI18n()
+
+  return (
+    <nav className="space-y-1" aria-label={t('nav.dashboardAria')}>
+      {navItems.map((item) => {
+        const isActive = item.id === activeTab
+        return (
+          <button
+            key={item.id}
+            type="button"
+            aria-current={isActive ? 'page' : undefined}
+            onClick={() => onSelect(item.id)}
+            className={cn('dashboard-nav-item', isActive && 'is-active')}
+          >
+            <item.icon className="size-[18px] shrink-0" aria-hidden />
+            <span>{t(item.labelKey)}</span>
+          </button>
+        )
+      })}
+    </nav>
+  )
+}
+
 function DesktopAside({
   activeTab,
   onLogout,
@@ -85,53 +133,27 @@ function DesktopAside({
   const { t } = useI18n()
 
   return (
-    <LiquidGlass className="hidden h-fit w-64 shrink-0 flex-col p-5 md:flex min-[1020px]:w-80">
-      <div className="mb-8 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-[15px] font-semibold tracking-tight">
-            {t('common.adminBrand')}
-          </p>
-          <p className="text-xs text-muted-foreground">{t('common.admin')}</p>
-        </div>
-        <div className="flex items-center gap-2">
+    <aside className="dashboard-sidebar hidden md:flex">
+      <BrandMark />
+      <div className="mt-10 flex-1">
+        <DashboardNav activeTab={activeTab} onSelect={onSelect} />
+      </div>
+      <div className="mt-8 border-t border-border/60 pt-5">
+        <div className="mb-3 flex items-center gap-2">
           <LocaleToggle />
           <ThemeToggle />
         </div>
+        <Button
+          type="button"
+          variant="ghost"
+          className="w-full justify-start text-muted-foreground"
+          onClick={onLogout}
+        >
+          <LogOut />
+          {t('common.logout')}
+        </Button>
       </div>
-
-      <nav className="flex flex-col gap-1" aria-label={t('nav.dashboardAria')}>
-        {navItems.map((item) => {
-          const isActive = item.id === activeTab
-          return (
-            <button
-              key={item.id}
-              type="button"
-              aria-current={isActive ? 'page' : undefined}
-              onClick={() => onSelect(item.id)}
-              className={cn(
-                'flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-sm font-medium transition-all duration-200',
-                isActive
-                  ? 'bg-[color:var(--glass-fill-strong)] text-foreground shadow-[inset_0_1px_0_var(--glass-inset)]'
-                  : 'text-muted-foreground hover:bg-[color:var(--glass-fill)] hover:text-foreground',
-              )}
-            >
-              <item.icon className="size-4 shrink-0" aria-hidden />
-              {t(item.labelKey)}
-            </button>
-          )
-        })}
-      </nav>
-
-      <Button
-        type="button"
-        variant="glass"
-        className="mt-8 w-full justify-start"
-        onClick={onLogout}
-      >
-        <LogOut />
-        {t('common.logout')}
-      </Button>
-    </LiquidGlass>
+    </aside>
   )
 }
 
@@ -139,19 +161,14 @@ function MobileTopBar({ onLogout }: { onLogout: () => void }) {
   const { t } = useI18n()
 
   return (
-    <div className="flex items-center justify-between md:hidden">
-      <div>
-        <p className="text-[15px] font-semibold tracking-tight">
-          {t('common.adminBrand')}
-        </p>
-        <p className="text-xs text-muted-foreground">{t('common.admin')}</p>
-      </div>
-      <div className="flex items-center gap-2">
+    <header className="dashboard-mobile-header md:hidden">
+      <BrandMark />
+      <div className="flex items-center gap-1.5">
         <LocaleToggle />
         <ThemeToggle />
         <Button
           type="button"
-          variant="glass"
+          variant="ghost"
           size="icon"
           onClick={onLogout}
           aria-label={t('common.logout')}
@@ -159,57 +176,31 @@ function MobileTopBar({ onLogout }: { onLogout: () => void }) {
           <LogOut />
         </Button>
       </div>
-    </div>
+    </header>
   )
 }
 
-function MobilePillTabBar({ activeTab, onSelect }: NavProps) {
+function MobileTabBar({ activeTab, onSelect }: NavProps) {
   const { t } = useI18n()
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden">
-      <LiquidGlass
-        intensity="strong"
-        interactive={false}
-        className={cn(
-          'pointer-events-auto w-full max-w-md !rounded-full p-1.5 shadow-[0_12px_40px_-12px_var(--glass-shadow-deep)]',
-          /* Solid underlay + near-opaque glass — readable over scrolling content */
-          'before:pointer-events-none before:absolute before:inset-0 before:z-0 before:rounded-[inherit] before:bg-background/95 dark:before:bg-background/92',
-          '[--glass-fill:color-mix(in_oklch,var(--background)_96%,transparent)]',
-          '[--glass-fill-strong:color-mix(in_oklch,var(--background)_99%,transparent)]',
-          '[--glass-stroke:color-mix(in_oklch,var(--foreground)_14%,transparent)]',
-          '[--glass-tint:transparent] [--glass-highlight:oklch(1_0_0/0.1)] [--glass-specular-opacity:0.1]',
-          'dark:[--glass-stroke:oklch(1_0_0/0.2)] dark:[--glass-highlight:oklch(1_0_0/0.05)]',
-          'backdrop-blur-md backdrop-saturate-125',
-        )}
-      >
-        <nav
-          className="grid grid-cols-4 gap-0.5"
-          aria-label={t('nav.dashboardAria')}
-        >
-          {navItems.map((item) => {
-            const isActive = item.id === activeTab
-            return (
-              <button
-                key={item.id}
-                type="button"
-                aria-current={isActive ? 'page' : undefined}
-                onClick={() => onSelect(item.id)}
-                className={cn(
-                  'flex min-w-0 flex-col items-center gap-1 rounded-full px-2 py-2.5 text-[10px] font-medium tracking-tight transition-all duration-200',
-                  isActive
-                    ? 'bg-foreground/12 font-semibold text-foreground shadow-[inset_0_1px_0_var(--glass-inset)] dark:bg-foreground/18'
-                    : 'text-foreground/72',
-                )}
-              >
-                <item.icon className="size-5 shrink-0" aria-hidden />
-                <span className="truncate">{t(item.labelKey)}</span>
-              </button>
-            )
-          })}
-        </nav>
-      </LiquidGlass>
-    </div>
+    <nav className="dashboard-mobile-nav md:hidden" aria-label={t('nav.dashboardAria')}>
+      {navItems.map((item) => {
+        const isActive = item.id === activeTab
+        return (
+          <button
+            key={item.id}
+            type="button"
+            aria-current={isActive ? 'page' : undefined}
+            onClick={() => onSelect(item.id)}
+            className={cn('dashboard-mobile-nav-item', isActive && 'is-active')}
+          >
+            <item.icon className="size-5" aria-hidden />
+            <span>{t(item.labelKey)}</span>
+          </button>
+        )
+      })}
+    </nav>
   )
 }
 
@@ -220,6 +211,7 @@ export function DashboardShell({ organizationId }: DashboardShellProps) {
   const [searchParams, setSearchParams] = useSearchParams()
   const tabParam = searchParams.get('tab')
   const activeTab: DashboardTab = isDashboardTab(tabParam) ? tabParam : 'overview'
+  const activeNavItem = navItems.find((item) => item.id === activeTab) ?? navItems[0]
   const [claimSkipped, setClaimSkipped] = useState(() =>
     readClaimDismissed(organizationId),
   )
@@ -251,6 +243,7 @@ export function DashboardShell({ organizationId }: DashboardShellProps) {
     if (next === 'overview') params.delete('tab')
     else params.set('tab', next)
     setSearchParams(params, { replace: true })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const skipDomainClaim = (): void => {
@@ -260,9 +253,9 @@ export function DashboardShell({ organizationId }: DashboardShellProps) {
 
   if (org === null) {
     return (
-      <div className="mx-auto flex min-h-dvh w-full max-w-lg items-center px-6 py-16">
-        <LiquidGlass className="w-full p-7 md:p-8" intensity="strong" interactive={false}>
-          <h1 className="text-2xl font-semibold tracking-tight text-balance">
+      <main className="mx-auto flex min-h-dvh w-full max-w-lg items-center px-6 py-16">
+        <section className="dashboard-panel dashboard-panel-primary w-full p-7 md:p-8">
+          <h1 className="text-3xl font-semibold tracking-tight text-balance">
             {t('errors.orgNotFoundTitle')}
           </h1>
           <p className="mt-3 text-[15px] leading-relaxed text-pretty text-muted-foreground">
@@ -271,8 +264,8 @@ export function DashboardShell({ organizationId }: DashboardShellProps) {
           <Button asChild className="mt-6">
             <Link to="/">{t('common.backHome')}</Link>
           </Button>
-        </LiquidGlass>
-      </div>
+        </section>
+      </main>
     )
   }
 
@@ -292,164 +285,128 @@ export function DashboardShell({ organizationId }: DashboardShellProps) {
     activeTab === 'overview'
 
   return (
-    <div className="min-h-dvh">
-      <div className="mx-auto flex min-h-dvh w-full max-w-[90rem] gap-5 p-4 pb-28 md:gap-6 md:p-7 md:pb-7">
-        <DesktopAside activeTab={activeTab} onLogout={logout} onSelect={setTab} />
+    <div className="dashboard-layout">
+      <a href="#dashboard-content" className="dashboard-skip-link">
+        {t('common.skipToContent')}
+      </a>
+      <DesktopAside activeTab={activeTab} onLogout={logout} onSelect={setTab} />
 
-        <div className="flex min-w-0 flex-1 flex-col gap-5 md:gap-6">
-          <MobileTopBar onLogout={logout} />
+      <div className="min-w-0 flex-1">
+        <MobileTopBar onLogout={logout} />
 
-          <LiquidGlass className="p-6 md:p-8" intensity="strong">
-            <p className="text-[13px] font-medium text-muted-foreground">
-              {t('dashboard.workspace')}
-            </p>
-            <h1 className="mt-1 text-3xl font-semibold tracking-tight text-balance">
-              {org?.companyName ?? t('dashboard.yourOrg')}
-            </h1>
-            <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-pretty text-muted-foreground">
-              {org?.domain
-                ? t('dashboard.analyticsFor', { domain: org.domain })
-                : t('dashboard.linkDomainHint')}
-            </p>
-            {org ? (
-              <dl className="mt-7 grid grid-cols-12 gap-4 text-sm">
-                <div className="col-span-12 rounded-xl border border-[color:var(--glass-stroke-outer)] bg-[color:var(--glass-recess)] p-4 shadow-[inset_0_1px_0_var(--glass-inset)] md:col-span-4">
-                  <dt className="text-xs font-medium text-muted-foreground">
-                    {t('dashboard.workEmail')}
-                  </dt>
-                  <dd className="mt-1 font-medium tracking-tight">
-                    {org.workEmail}
-                  </dd>
-                </div>
-                <div className="col-span-12 rounded-xl border border-[color:var(--glass-stroke-outer)] bg-[color:var(--glass-recess)] p-4 shadow-[inset_0_1px_0_var(--glass-inset)] md:col-span-4">
-                  <dt className="text-xs font-medium text-muted-foreground">
-                    {t('dashboard.phone')}
-                  </dt>
-                  <dd className="mt-1 font-medium tracking-tight">{org.phone}</dd>
-                </div>
-                <div className="col-span-12 rounded-xl border border-[color:var(--glass-stroke-outer)] bg-[color:var(--glass-recess)] p-4 shadow-[inset_0_1px_0_var(--glass-inset)] md:col-span-4">
-                  <dt className="text-xs font-medium text-muted-foreground">
-                    {t('dashboard.domain')}
-                  </dt>
-                  <dd className="mt-1 font-medium tracking-tight">
-                    {org.domain
-                      ? org.domain
-                      : org.pendingDomain
-                        ? t('dashboard.domainPending', {
-                            domain: org.pendingDomain,
-                          })
-                        : t('dashboard.domainNotLinked')}
-                  </dd>
-                </div>
-              </dl>
-            ) : (
-              <p className="mt-6 text-sm text-muted-foreground">
-                {t('dashboard.loadingOrg')}
-              </p>
-            )}
-          </LiquidGlass>
+        <main id="dashboard-content" className="dashboard-main" tabIndex={-1}>
+          <header className="dashboard-page-header">
+            <div className="min-w-0">
+              <div className="mb-3 flex flex-wrap items-center gap-2.5">
+                <span className="dashboard-eyebrow">
+                  <Building2 className="size-3.5" aria-hidden />
+                  {org?.companyName ?? t('dashboard.yourOrg')}
+                </span>
+                <span className={cn('dashboard-domain-status', !org?.domain && 'is-muted')}>
+                  <Globe2 className="size-3.5" aria-hidden />
+                  {org?.domain
+                    ? org.domain
+                    : org?.pendingDomain
+                      ? t('dashboard.domainPending', { domain: org.pendingDomain })
+                      : t('dashboard.domainNotLinked')}
+                </span>
+              </div>
+              <h1 className="text-4xl font-semibold tracking-[-0.045em] text-balance md:text-5xl">
+                {t(activeNavItem.labelKey)}
+              </h1>
+            </div>
+          </header>
 
-          {showPendingBanner && org?.pendingDomain ? (
-            <LiquidGlass className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between md:p-6">
-              <p className="text-sm leading-relaxed text-pretty text-muted-foreground">
-                {t('dashboard.pendingVerifyBanner', {
-                  domain: org.pendingDomain,
-                })}
-              </p>
-              <Button
-                type="button"
-                variant="glass"
-                className="shrink-0"
-                onClick={() => setTab('settings')}
-              >
-                {t('dashboard.pendingVerifyAction')}
-              </Button>
-            </LiquidGlass>
-          ) : null}
-
-          {showSkippedNoDomainBanner ? (
-            <LiquidGlass className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between md:p-6">
-              <p className="text-sm leading-relaxed text-pretty text-muted-foreground">
-                {t('dashboard.claimLaterBanner')}
-              </p>
-              <Button
-                type="button"
-                variant="glass"
-                className="shrink-0"
-                onClick={() => setTab('settings')}
-              >
-                {t('dashboard.pendingVerifyAction')}
-              </Button>
-            </LiquidGlass>
-          ) : null}
-
-          {showClaimCard && org ? (
-            <LiquidGlass className="p-6 md:p-8" intensity="strong">
-              <div className="mb-6 max-w-xl space-y-2">
-                <h2 className="text-xl font-semibold tracking-tight">
-                  {t('dashboard.claimTitle')}
-                </h2>
-                <p className="text-[15px] leading-relaxed text-pretty text-muted-foreground">
-                  {t('dashboard.claimBody')}
+          <div className="dashboard-content-stack">
+            {showPendingBanner && org?.pendingDomain ? (
+              <section className="dashboard-notice" aria-live="polite">
+                <p>
+                  {t('dashboard.pendingVerifyBanner', { domain: org.pendingDomain })}
                 </p>
-              </div>
-              <div className="max-w-md">
-                <DomainClaimForm
-                  key={locale}
-                  allowSkip
-                  organizationId={orgId}
-                  pendingDomain={org.pendingDomain}
-                  txtHost={org.domainVerificationHost}
-                  txtValue={org.domainVerificationValue}
-                  expiresAt={org.domainVerificationExpiresAt}
-                  onClaimed={() => undefined}
-                  onSkip={skipDomainClaim}
-                />
-              </div>
-            </LiquidGlass>
-          ) : null}
+                <Button type="button" variant="outline" onClick={() => setTab('settings')}>
+                  {t('dashboard.pendingVerifyAction')}
+                </Button>
+              </section>
+            ) : null}
 
-          {org?.domain && activeTab === 'overview' && stats === undefined ? (
-            <LiquidGlass className="p-6">
-              <p className="text-sm text-muted-foreground">
-                {t('dashboard.loadingAnalytics')}
-              </p>
-            </LiquidGlass>
-          ) : null}
+            {showSkippedNoDomainBanner ? (
+              <section className="dashboard-notice" aria-live="polite">
+                <p>{t('dashboard.claimLaterBanner')}</p>
+                <Button type="button" variant="outline" onClick={() => setTab('settings')}>
+                  {t('dashboard.pendingVerifyAction')}
+                </Button>
+              </section>
+            ) : null}
 
-          {org?.domain && activeTab === 'overview' && stats ? (
-            <OverviewPanel stats={stats} />
-          ) : null}
+            {showClaimCard && org ? (
+              <section className="dashboard-panel dashboard-panel-primary p-6 md:p-9">
+                <div className="grid gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(20rem,1fr)] lg:items-start">
+                  <div>
+                    <p className="dashboard-section-index">01 · {t('nav.overview')}</p>
+                    <h2 className="mt-3 text-3xl font-semibold tracking-tight text-balance">
+                      {t('dashboard.claimTitle')}
+                    </h2>
+                    <p className="mt-3 max-w-lg text-[15px] leading-7 text-pretty text-muted-foreground">
+                      {t('dashboard.claimBody')}
+                    </p>
+                  </div>
+                  <DomainClaimForm
+                    key={locale}
+                    allowSkip
+                    organizationId={orgId}
+                    pendingDomain={org.pendingDomain}
+                    txtHost={org.domainVerificationHost}
+                    txtValue={org.domainVerificationValue}
+                    expiresAt={org.domainVerificationExpiresAt}
+                    onClaimed={() => undefined}
+                    onSkip={skipDomainClaim}
+                  />
+                </div>
+              </section>
+            ) : null}
 
-          {org?.domain && activeTab === 'learners' ? (
-            <LearnersPanel domain={org.domain} organizationId={orgId} />
-          ) : null}
+            {org?.domain && activeTab === 'overview' && stats === undefined ? (
+              <section className="dashboard-empty-state">
+                <p>{t('dashboard.loadingAnalytics')}</p>
+              </section>
+            ) : null}
 
-          {org?.domain && activeTab === 'widget' ? (
-            <WidgetPanel domain={org.domain} stats={stats} />
-          ) : null}
+            {org?.domain && activeTab === 'overview' && stats ? (
+              <OverviewPanel stats={stats} />
+            ) : null}
 
-          {org && activeTab === 'settings' ? (
-            <SettingsPanel
-              key={locale}
-              organization={org}
-              organizationId={organizationId}
-            />
-          ) : null}
+            {org?.domain && activeTab === 'learners' ? (
+              <LearnersPanel domain={org.domain} organizationId={orgId} />
+            ) : null}
 
-          {org &&
-          !org.domain &&
-          (activeTab === 'learners' || activeTab === 'widget') ? (
-            <LiquidGlass className="p-6">
-              <p className="text-sm text-muted-foreground">
-                {t('dashboard.claimFirst')}
-              </p>
-            </LiquidGlass>
-          ) : null}
-        </div>
+            {org?.domain && activeTab === 'widget' ? (
+              <WidgetPanel domain={org.domain} stats={stats} />
+            ) : null}
+
+            {org && activeTab === 'settings' ? (
+              <SettingsPanel
+                key={locale}
+                organization={org}
+                organizationId={organizationId}
+              />
+            ) : null}
+
+            {org &&
+            !org.domain &&
+            (activeTab === 'learners' || activeTab === 'widget') ? (
+              <section className="dashboard-empty-state">
+                <Globe2 className="size-5 text-primary" aria-hidden />
+                <p>{t('dashboard.claimFirst')}</p>
+                <Button type="button" variant="outline" onClick={() => setTab('settings')}>
+                  {t('dashboard.pendingVerifyAction')}
+                </Button>
+              </section>
+            ) : null}
+          </div>
+        </main>
       </div>
 
-      <MobilePillTabBar activeTab={activeTab} onSelect={setTab} />
+      <MobileTabBar activeTab={activeTab} onSelect={setTab} />
     </div>
   )
 }

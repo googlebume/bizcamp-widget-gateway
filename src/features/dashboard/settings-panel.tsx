@@ -1,11 +1,18 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from 'convex/react'
-import { Check, Loader2 } from 'lucide-react'
+import {
+  Building2,
+  Check,
+  ChevronDown,
+  Globe2,
+  KeyRound,
+  Loader2,
+  type LucideIcon,
+} from 'lucide-react'
 import { api } from '@bizcamp-backend/_generated/api'
 import type { Id } from '@bizcamp-backend/_generated/dataModel'
-import { LiquidGlass } from '@/components/liquid-glass'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -36,6 +43,44 @@ type OrganizationDetails = {
 type SettingsPanelProps = {
   organization: OrganizationDetails
   organizationId: string
+}
+
+function SettingsSection({
+  children,
+  defaultOpen = false,
+  icon: Icon,
+  index,
+  title,
+}: {
+  children: ReactNode
+  defaultOpen?: boolean
+  icon: LucideIcon
+  index: string
+  title: string
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen)
+
+  return (
+    <details
+      className="dashboard-disclosure group"
+      open={isOpen}
+      onToggle={(event) => setIsOpen(event.currentTarget.open)}
+    >
+      <summary>
+        <span className="flex min-w-0 items-start gap-4">
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+            <Icon className="size-[18px]" aria-hidden />
+          </span>
+          <span className="min-w-0">
+            <small className="dashboard-section-index">{index}</small>
+            <strong className="mt-1 block">{title}</strong>
+          </span>
+        </span>
+        <ChevronDown aria-hidden />
+      </summary>
+      <div className="border-t border-border/60 p-6 md:p-8">{children}</div>
+    </details>
+  )
 }
 
 export function SettingsPanel({
@@ -125,18 +170,16 @@ export function SettingsPanel({
   })
 
   return (
-    <div className="flex flex-col gap-5 md:gap-6">
-      <LiquidGlass className="p-6 md:p-7">
-        <h2 className="text-xl font-semibold tracking-tight">
-          {t('settings.orgTitle')}
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t('settings.orgBody')}
-        </p>
-
-        <form className="mt-6 space-y-4" onSubmit={onSaveProfile} noValidate>
-          <div className="grid grid-cols-12 gap-4">
-            <div className="col-span-12 space-y-2 md:col-span-6">
+    <div className="dashboard-content-stack">
+      <SettingsSection
+        defaultOpen
+        icon={Building2}
+        index="01"
+        title={t('settings.orgTitle')}
+      >
+        <form className="max-w-3xl space-y-5" onSubmit={onSaveProfile} noValidate>
+          <div className="grid gap-5 md:grid-cols-2">
+            <div className="space-y-2">
               <Label htmlFor="settingsCompany">{t('form.companyName')}</Label>
               <Input
                 id="settingsCompany"
@@ -150,7 +193,7 @@ export function SettingsPanel({
                 </p>
               ) : null}
             </div>
-            <div className="col-span-12 space-y-2 md:col-span-6">
+            <div className="space-y-2">
               <Label htmlFor="settingsEmail">{t('form.workEmail')}</Label>
               <Input
                 id="settingsEmail"
@@ -165,7 +208,7 @@ export function SettingsPanel({
                 </p>
               ) : null}
             </div>
-            <div className="col-span-12 space-y-2 md:col-span-6">
+            <div className="space-y-2">
               <Label htmlFor="settingsPhone">{t('form.phoneShort')}</Label>
               <Input
                 id="settingsPhone"
@@ -180,23 +223,25 @@ export function SettingsPanel({
                 </p>
               ) : null}
             </div>
-            <div className="col-span-12 space-y-2 md:col-span-6">
-              <Label htmlFor="settingsOrgId">{t('settings.orgId')}</Label>
-              <Input
-                id="settingsOrgId"
-                value={organizationId}
-                readOnly
-                className="font-mono text-xs"
-              />
-              <p className="text-xs text-muted-foreground">
-                {t('settings.created', {
-                  date: new Date(organization.createdAt).toLocaleString(
-                    dateLocale,
-                  ),
-                })}
-              </p>
-            </div>
           </div>
+
+          <details className="max-w-3xl rounded-xl border border-border/60 bg-[color:var(--glass-recess)]">
+            <summary className="cursor-pointer px-4 py-3 text-xs font-medium text-muted-foreground">
+              {t('settings.technicalDetails')}
+            </summary>
+            <dl className="grid gap-4 border-t border-border/60 px-4 py-4 text-xs md:grid-cols-2">
+              <div>
+                <dt className="text-muted-foreground">{t('settings.orgId')}</dt>
+                <dd className="mt-1 break-all font-mono">{organizationId}</dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">{t('settings.createdLabel')}</dt>
+                <dd className="mt-1">
+                  {new Date(organization.createdAt).toLocaleString(dateLocale)}
+                </dd>
+              </div>
+            </dl>
+          </details>
 
           {profileError ? (
             <p className="text-sm text-destructive" role="alert">
@@ -210,10 +255,7 @@ export function SettingsPanel({
             </p>
           ) : null}
 
-          <Button
-            type="submit"
-            disabled={profileForm.formState.isSubmitting}
-          >
+          <Button type="submit" disabled={profileForm.formState.isSubmitting}>
             {profileForm.formState.isSubmitting ? (
               <>
                 <Loader2 className="animate-spin" />
@@ -224,21 +266,15 @@ export function SettingsPanel({
             )}
           </Button>
         </form>
-      </LiquidGlass>
+      </SettingsSection>
 
-      <LiquidGlass className="p-6 md:p-7">
-        <h2 className="text-xl font-semibold tracking-tight">
-          {t('settings.domainTitle')}
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground text-pretty">
-          {organization.pendingDomain && !organization.domain
-            ? t('settings.domainPendingBody', {
-                domain: organization.pendingDomain,
-              })
-            : t('settings.domainBody')}
-        </p>
-
-        <div className="mt-6 max-w-md">
+      <SettingsSection
+        defaultOpen={Boolean(organization.pendingDomain && !organization.domain)}
+        icon={Globe2}
+        index="02"
+        title={t('settings.domainTitle')}
+      >
+        <div className="max-w-xl">
           <DomainClaimForm
             organizationId={orgId}
             verifiedDomain={organization.domain}
@@ -250,32 +286,25 @@ export function SettingsPanel({
             submitFullWidth={false}
           />
         </div>
-      </LiquidGlass>
+      </SettingsSection>
 
-      <LiquidGlass className="p-6 md:p-7">
-        <h2 className="text-xl font-semibold tracking-tight">
-          {t('settings.passwordTitle')}
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t('settings.passwordBody')}
-        </p>
-
+      <SettingsSection
+        icon={KeyRound}
+        index="03"
+        title={t('settings.passwordTitle')}
+      >
         <form
-          className="mt-6 max-w-md space-y-4"
+          className="max-w-md space-y-4"
           onSubmit={onSavePassword}
           noValidate
         >
           <div className="space-y-2">
-            <Label htmlFor="currentPassword">
-              {t('settings.currentPassword')}
-            </Label>
+            <Label htmlFor="currentPassword">{t('settings.currentPassword')}</Label>
             <Input
               id="currentPassword"
               type="password"
               autoComplete="current-password"
-              aria-invalid={Boolean(
-                passwordForm.formState.errors.currentPassword,
-              )}
+              aria-invalid={Boolean(passwordForm.formState.errors.currentPassword)}
               {...passwordForm.register('currentPassword')}
             />
             {passwordForm.formState.errors.currentPassword ? (
@@ -300,16 +329,12 @@ export function SettingsPanel({
             ) : null}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">
-              {t('settings.confirmPassword')}
-            </Label>
+            <Label htmlFor="confirmPassword">{t('settings.confirmPassword')}</Label>
             <Input
               id="confirmPassword"
               type="password"
               autoComplete="new-password"
-              aria-invalid={Boolean(
-                passwordForm.formState.errors.confirmPassword,
-              )}
+              aria-invalid={Boolean(passwordForm.formState.errors.confirmPassword)}
               {...passwordForm.register('confirmPassword')}
             />
             {passwordForm.formState.errors.confirmPassword ? (
@@ -342,7 +367,7 @@ export function SettingsPanel({
             )}
           </Button>
         </form>
-      </LiquidGlass>
+      </SettingsSection>
     </div>
   )
 }

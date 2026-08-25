@@ -1,25 +1,9 @@
-/**
- * Absolute script URL for LMS embeds.
- * Prefer VITE_WIDGET_SCRIPT_URL in production if the CDN differs from the admin origin.
- * Otherwise serve /widget.js from this app (see public/widget.js).
- */
+const PRODUCTION_WIDGET_SCRIPT_URL =
+  'https://adaptive-widget.kostapenko.com/widget.js'
+
+/** Absolute production script URL shown in the admin Widget panel. */
 export function getWidgetScriptUrl(): string {
-  const configured = import.meta.env.VITE_WIDGET_SCRIPT_URL?.trim()
-  if (configured) {
-    try {
-      return new URL(configured).href
-    } catch {
-      console.warn(
-        '[Bizcamp] VITE_WIDGET_SCRIPT_URL is invalid; falling back to /widget.js',
-      )
-    }
-  }
-
-  if (typeof window !== 'undefined' && window.location?.origin) {
-    return new URL('/widget.js', window.location.origin).href
-  }
-
-  return '/widget.js'
+  return PRODUCTION_WIDGET_SCRIPT_URL
 }
 
 /** Drop-in snippet shown in the admin Widget panel. */

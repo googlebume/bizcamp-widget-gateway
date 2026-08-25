@@ -1,7 +1,7 @@
 import { useQuery } from 'convex/react'
+import { Users } from 'lucide-react'
 import { api } from '@bizcamp-backend/_generated/api'
 import type { Id } from '@bizcamp-backend/_generated/dataModel'
-import { LiquidGlass } from '@/components/liquid-glass'
 import { useI18n } from '@/i18n/provider'
 import { formatDuration } from '@/lib/format-duration'
 
@@ -18,63 +18,29 @@ function formatAvg(value: number): string {
   return value.toFixed(value >= 10 ? 0 : 1)
 }
 
-function StatCard({
+function ShareBar({
   label,
   value,
-  hint,
+  total,
 }: {
   label: string
-  value: string | number
-  hint?: string
+  value: number
+  total: number
 }) {
-  return (
-    <LiquidGlass className="col-span-6 p-5 md:col-span-4 lg:col-span-3">
-      <p className="text-[12px] font-medium text-muted-foreground">{label}</p>
-      <p className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">
-        {value}
-      </p>
-      {hint ? (
-        <p className="mt-1 text-xs text-muted-foreground text-pretty">{hint}</p>
-      ) : null}
-    </LiquidGlass>
-  )
-}
-
-function ShareBar({
-  title,
-  items,
-}: {
-  title: string
-  items: Array<{ label: string; value: number }>
-}) {
-  const total = items.reduce((sum, item) => sum + item.value, 0)
-  const max = Math.max(1, ...items.map((item) => item.value))
+  const share = total > 0 ? value / total : 0
 
   return (
-    <LiquidGlass className="p-6">
-      <p className="text-[13px] font-medium text-muted-foreground">{title}</p>
-      <ul className="mt-4 space-y-3">
-        {items.map((item) => (
-          <li key={item.label}>
-            <div className="mb-1 flex items-baseline justify-between gap-3 text-sm">
-              <span className="font-medium tracking-tight capitalize">
-                {item.label}
-              </span>
-              <span className="tabular-nums text-muted-foreground">
-                {item.value}
-                {total > 0 ? ` · ${formatPercent(item.value / total)}` : ''}
-              </span>
-            </div>
-            <div className="h-2 overflow-hidden rounded-full bg-[color:var(--glass-recess)]">
-              <div
-                className="h-full rounded-full bg-primary/80 transition-[width] duration-300"
-                style={{ width: `${(item.value / max) * 100}%` }}
-              />
-            </div>
-          </li>
-        ))}
-      </ul>
-    </LiquidGlass>
+    <li>
+      <div className="mb-2 flex items-baseline justify-between gap-3 text-sm">
+        <span className="font-medium capitalize">{label}</span>
+        <span className="tabular-nums text-muted-foreground">
+          {value}{total > 0 ? ` · ${formatPercent(share)}` : ''}
+        </span>
+      </div>
+      <div className="dashboard-progress-track">
+        <div className="dashboard-progress-fill" style={{ width: `${share * 100}%` }} />
+      </div>
+    </li>
   )
 }
 
@@ -87,20 +53,19 @@ export function LearnersPanel({ domain, organizationId }: LearnersPanelProps) {
   })
 
   if (data === undefined) {
-    return (
-      <LiquidGlass className="p-6">
-        <p className="text-sm text-muted-foreground">{t('learners.loading')}</p>
-      </LiquidGlass>
-    )
+    return <section className="dashboard-empty-state">{t('learners.loading')}</section>
   }
 
   if (data === null) {
+    return <section className="dashboard-empty-state">{t('learners.claimDomain')}</section>
+  }
+
+  if (data.totalLearners === 0) {
     return (
-      <LiquidGlass className="p-6">
-        <p className="text-sm text-muted-foreground">
-          {t('learners.claimDomain')}
-        </p>
-      </LiquidGlass>
+      <section className="dashboard-empty-state">
+        <Users className="size-5 text-primary" aria-hidden />
+        <p>{t('learners.empty')}</p>
+      </section>
     )
   }
 
@@ -110,97 +75,103 @@ export function LearnersPanel({ domain, organizationId }: LearnersPanelProps) {
     { label: 'deep', value: data.modePreference.deep },
     { label: t('learners.modeNone'), value: data.modePreference.none },
   ]
-
-  const calibrationItems = [
-    {
-      label: t('learners.calibratedLabel'),
-      value: data.calibratedLearners,
-    },
-    {
-      label: t('learners.uncalibratedLabel'),
-      value: data.uncalibratedLearners,
-    },
-  ]
+  const modeTotal = modeItems.reduce((sum, item) => sum + item.value, 0)
 
   return (
-    <div className="flex flex-col gap-5 md:gap-6">
-      <LiquidGlass className="p-6 md:p-7">
-        <h2 className="text-xl font-semibold tracking-tight">
-          {t('learners.title')}
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t('learners.subtitle', {
-            domain: data.domain,
-            days: data.rangeDays,
-          })}
-        </p>
-      </LiquidGlass>
-
-      {data.totalLearners === 0 ? (
-        <LiquidGlass className="p-6">
-          <p className="text-sm text-muted-foreground">{t('learners.empty')}</p>
-        </LiquidGlass>
-      ) : (
-        <>
-          <div className="grid grid-cols-12 gap-4 md:gap-5">
-            <StatCard
-              label={t('learners.total')}
-              value={data.totalLearners}
-              hint={t('learners.totalHint')}
-            />
-            <StatCard
-              label={t('learners.active7d')}
-              value={data.engagedLast7Days}
-              hint={t('learners.active7dHint', {
-                rate: formatPercent(data.engagedLast7Days / data.totalLearners),
-              })}
-            />
-            <StatCard
-              label={t('learners.calibrated')}
-              value={data.calibratedLearners}
-              hint={t('overview.rate', {
-                rate: formatPercent(data.calibrationRate),
-              })}
-            />
-            <StatCard
-              label={t('learners.notCalibrated')}
-              value={data.uncalibratedLearners}
-            />
-            <StatCard
-              label={t('learners.avgSessions')}
-              value={formatAvg(data.avgSessions)}
-              hint={t('learners.perLearner')}
-            />
-            <StatCard
-              label={t('learners.avgOpens')}
-              value={formatAvg(data.avgWidgetOpens)}
-              hint={t('learners.perLearner')}
-            />
-            <StatCard
-              label={t('learners.avgPersonalizations')}
-              value={formatAvg(data.avgPersonalizations)}
-              hint={t('learners.perLearner')}
-            />
-            <StatCard
-              label={t('learners.avgPageTime')}
-              value={formatDuration(data.avgPageTimeMs)}
-              hint={t('learners.perLearner')}
-            />
+    <div className="dashboard-content-stack">
+      <section className="dashboard-panel dashboard-panel-primary overflow-hidden">
+        <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
+          <div className="border-b border-border/60 p-6 md:p-8 lg:border-b-0 lg:border-r">
+            <p className="dashboard-section-index">
+              01 · {t('overview.lastDays', { days: data.rangeDays })}
+            </p>
+            <p className="mt-8 text-sm font-medium text-muted-foreground">
+              {t('learners.total')}
+            </p>
+            <p className="mt-2 text-6xl font-semibold tracking-[-0.06em] tabular-nums md:text-7xl">
+              {data.totalLearners}
+            </p>
           </div>
-
-          <div className="grid grid-cols-12 gap-5 md:gap-6">
-            <div className="col-span-12 md:col-span-6">
-              <ShareBar
-                title={t('learners.calibrationStatus')}
-                items={calibrationItems}
-              />
+          <dl className="grid sm:grid-cols-3">
+            <div className="dashboard-metric">
+              <dt>{t('learners.active7d')}</dt>
+              <dd>{data.engagedLast7Days}</dd>
+              <p>
+                {t('learners.active7dHint', {
+                  rate: formatPercent(data.engagedLast7Days / data.totalLearners),
+                })}
+              </p>
             </div>
-            <div className="col-span-12 md:col-span-6">
-              <ShareBar title={t('learners.lastMode')} items={modeItems} />
+            <div className="dashboard-metric">
+              <dt>{t('learners.calibrated')}</dt>
+              <dd>{data.calibratedLearners}</dd>
+              <p>{t('overview.rate', { rate: formatPercent(data.calibrationRate) })}</p>
+            </div>
+            <div className="dashboard-metric">
+              <dt>{t('learners.notCalibrated')}</dt>
+              <dd>{data.uncalibratedLearners}</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+
+      <div className="grid gap-5 lg:grid-cols-[minmax(18rem,0.85fr)_minmax(0,1.4fr)]">
+        <section className="dashboard-panel p-6 md:p-8">
+          <p className="dashboard-section-index">02 · {t('learners.behavior')}</p>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+            {t('learners.perLearner')}
+          </h2>
+          <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-7">
+            {[
+              [t('learners.avgSessions'), formatAvg(data.avgSessions)],
+              [t('learners.avgOpens'), formatAvg(data.avgWidgetOpens)],
+              [t('learners.avgPersonalizations'), formatAvg(data.avgPersonalizations)],
+              [t('learners.avgPageTime'), formatDuration(data.avgPageTimeMs)],
+            ].map(([label, value]) => (
+              <div key={String(label)}>
+                <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
+                <dd className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">
+                  {value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+
+        <section className="dashboard-panel p-6 md:p-8">
+          <p className="dashboard-section-index">03 · {t('learners.profiles')}</p>
+          <div className="mt-7 grid gap-8 md:grid-cols-2 md:divide-x md:divide-border/60">
+            <div>
+              <h2 className="dashboard-subheading">{t('learners.calibrationStatus')}</h2>
+              <ul className="mt-5 space-y-4">
+                <ShareBar
+                  label={t('learners.calibratedLabel')}
+                  value={data.calibratedLearners}
+                  total={data.totalLearners}
+                />
+                <ShareBar
+                  label={t('learners.uncalibratedLabel')}
+                  value={data.uncalibratedLearners}
+                  total={data.totalLearners}
+                />
+              </ul>
+            </div>
+            <div className="md:pl-8">
+              <h2 className="dashboard-subheading">{t('learners.lastMode')}</h2>
+              <ul className="mt-5 space-y-4">
+                {modeItems.map((item) => (
+                  <ShareBar
+                    key={item.label}
+                    label={item.label}
+                    value={item.value}
+                    total={modeTotal}
+                  />
+                ))}
+              </ul>
             </div>
           </div>
-        </>
-      )}
+        </section>
+      </div>
     </div>
   )
 }

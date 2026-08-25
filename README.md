@@ -21,7 +21,7 @@ bun run dev:convex
 # Terminal 2 — gateway UI (points at the same Convex URLs)
 cd ../bizcamp-widget-gateway
 bun install
-# Copy VITE_CONVEX_* and VITE_WIDGET_CONVEX_* from the widget .env.local
+# Copy VITE_CONVEX_* from the widget .env.local
 bun run dev
 ```
 
@@ -45,10 +45,8 @@ Vite aliases:
 - `@bizcamp-widget` → `../react-widget-bizcamp/src`
 - `@bizcamp-backend` → `../react-widget-bizcamp/convex`
 
-The hero **Live demo** embeds `/widget-demo.html` in an iframe. That page mounts the real
-widget runtime against the shared Convex deployment. Usage on `localhost` appears in the
-dashboard after you claim the `localhost` domain.
+The hero **Live demo** embeds `/widget-demo.html` in an iframe. That page loads the local
+`/widget.js` artifact, built from `react-widget-bizcamp` via `bun run sync-widget`.
 
-Admin **Widget** tab shows an embed snippet pointing at `/widget.js` on this origin
-(built from `react-widget-bizcamp` via `bun run sync-widget`). Optionally set
-`VITE_WIDGET_SCRIPT_URL` for a CDN URL.
+Admin **Widget** always shows the production script URL:
+`https://adaptive-widget.kostapenko.com/widget.js`.
