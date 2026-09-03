@@ -7,4 +7,3 @@ dist
 *.local
 .convex
 .vercel
-public/widget.js

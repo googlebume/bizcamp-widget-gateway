@@ -21,8 +21,7 @@
     "noUncheckedSideEffectImports": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@bizcamp-widget/*": ["../react-widget-bizcamp/src/*"],
-      "@bizcamp-backend/*": ["../react-widget-bizcamp/convex/*"]
+      "@bizcamp-backend/*": ["./vendor/bizcamp-backend/*"]
     }
   },
   "include": ["src"]

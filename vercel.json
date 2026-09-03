@@ -1,5 +1,5 @@
 {
-  "installCommand": "bun install && bun run ensure-widget",
+  "installCommand": "bun install",
   "buildCommand": "bun run vercel-build",
   "outputDirectory": "dist",
   "framework": "vite",

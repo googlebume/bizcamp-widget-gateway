@@ -3,25 +3,22 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-const widgetRoot = path.resolve(import.meta.dirname, '../react-widget-bizcamp')
+const vendorBackend = path.resolve(
+  import.meta.dirname,
+  'vendor/bizcamp-backend',
+)
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
       '@': path.resolve(import.meta.dirname, './src'),
-      '@bizcamp-widget': path.resolve(widgetRoot, 'src'),
-      '@bizcamp-backend': path.resolve(widgetRoot, 'convex'),
+      '@bizcamp-backend': vendorBackend,
     },
     dedupe: ['react', 'react-dom', 'convex', '@convex-dev/auth'],
   },
   optimizeDeps: {
     include: ['@convex-dev/auth/react', 'convex/react'],
-  },
-  server: {
-    fs: {
-      allow: [path.resolve(import.meta.dirname), widgetRoot],
-    },
   },
   build: {
     rollupOptions: {
