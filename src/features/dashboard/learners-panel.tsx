@@ -6,7 +6,6 @@ import { useI18n } from '@/i18n/provider'
 import { formatDuration } from '@/lib/format-duration'
 
 type LearnersPanelProps = {
-  domain: string
   organizationId: Id<'organizations'>
 }
 
@@ -44,10 +43,9 @@ function ShareBar({
   )
 }
 
-export function LearnersPanel({ domain, organizationId }: LearnersPanelProps) {
+export function LearnersPanel({ organizationId }: LearnersPanelProps) {
   const { t } = useI18n()
   const data = useQuery(api.analytics.getLearnersSummary, {
-    domain,
     organizationId,
     rangeDays: 30,
   })

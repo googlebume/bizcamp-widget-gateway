@@ -162,6 +162,9 @@ export const uk: Record<MessageKey, string> = {
   'domain.verifyTxt': 'Підтвердити домен',
   'domain.changeDomain': 'Використати інший домен',
   'domain.skipForNow': 'Пропустити',
+  'domain.skipVerification': 'Пропустити перевірку',
+  'domain.skippingVerification': 'Підтвердження домену…',
+  'domain.skipFailed': 'Не вдалося підтвердити домен. Спробуйте ще раз.',
   'domain.skipHint':
     'Підтвердження домену можна завершити пізніше в налаштуваннях.',
   'domain.verifyFailed':

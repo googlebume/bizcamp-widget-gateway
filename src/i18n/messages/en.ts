@@ -150,6 +150,9 @@ export const en = {
   'domain.verifyTxt': 'Verify domain',
   'domain.changeDomain': 'Use a different domain',
   'domain.skipForNow': 'Skip for now',
+  'domain.skipVerification': 'Skip verification',
+  'domain.skippingVerification': 'Confirming domain…',
+  'domain.skipFailed': 'Could not confirm the domain. Try again.',
   'domain.skipHint':
     'You can complete domain verification later from Settings.',
   'domain.verifyFailed':

@@ -227,7 +227,7 @@ export function DashboardShell({ organizationId }: DashboardShellProps) {
   const stats = useQuery(
     api.analytics.getDomainDashboard,
     org?.domain
-      ? { domain: org.domain, organizationId: orgId, rangeDays: 30 }
+      ? { organizationId: orgId, rangeDays: 30 }
       : 'skip',
   )
 
@@ -376,7 +376,7 @@ export function DashboardShell({ organizationId }: DashboardShellProps) {
             ) : null}
 
             {org?.domain && activeTab === 'learners' ? (
-              <LearnersPanel domain={org.domain} organizationId={orgId} />
+              <LearnersPanel organizationId={orgId} />
             ) : null}
 
             {org?.domain && activeTab === 'widget' ? (

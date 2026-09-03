@@ -53,10 +53,14 @@ export function DomainClaimForm({
 	const { t, dateLocale } = useI18n()
 	const errorCopy = useErrorCopy()
 	const beginClaim = useMutation(api.organizations.beginDomainClaim)
+	const skipVerification = useMutation(
+		api.organizations.skipDomainVerification,
+	)
 	const verifyClaim = useAction(api.verifyDomain.verifyDomainClaim)
 	const [serverError, setServerError] = useState<string | null>(null)
 	const [successMessage, setSuccessMessage] = useState<string | null>(null)
 	const [challenge, setChallenge] = useState<DomainChallenge | null>(null)
+	const [skippingVerification, setSkippingVerification] = useState(false)
 	const [verifying, setVerifying] = useState(false)
 	const [copiedField, setCopiedField] = useState<'host' | 'value' | null>(null)
 	const schema = useMemo(() => createDomainClaimSchema(t), [t])
@@ -134,6 +138,19 @@ export function DomainClaimForm({
 		}
 	}
 
+	const onSkipVerification = async (): Promise<void> => {
+		setServerError(null)
+		setSkippingVerification(true)
+		try {
+			const result = await skipVerification({ organizationId })
+			finishClaim(result.domain)
+		} catch (error) {
+			setServerError(toUserFacingError(error, errorCopy('domain.skipFailed')))
+		} finally {
+			setSkippingVerification(false)
+		}
+	}
+
 	const copyValue = async (
 		field: 'host' | 'value',
 		value: string,
@@ -185,7 +202,7 @@ export function DomainClaimForm({
 					<div className='flex flex-wrap gap-2'>
 						<Button
 							type='button'
-							disabled={verifying}
+							disabled={verifying || skippingVerification}
 							onClick={() => void onVerify()}
 						>
 							{verifying ? (
@@ -200,6 +217,7 @@ export function DomainClaimForm({
 						<Button
 							type='button'
 							variant='ghost'
+							disabled={verifying || skippingVerification}
 							onClick={() => {
 								setChallenge(null)
 								setServerError(null)
@@ -207,11 +225,21 @@ export function DomainClaimForm({
 						>
 							{t('domain.changeDomain')}
 						</Button>
-						{allowSkip && onSkip ? (
-							<Button type='button' variant='ghost' onClick={onSkip}>
-								{t('domain.skipForNow')}
-							</Button>
-						) : null}
+						<Button
+							type='button'
+							variant='ghost'
+							disabled={verifying || skippingVerification}
+							onClick={() => void onSkipVerification()}
+						>
+							{skippingVerification ? (
+								<>
+									<Loader2 className='animate-spin' />
+									{t('domain.skippingVerification')}
+								</>
+							) : (
+								t('domain.skipVerification')
+							)}
+						</Button>
 					</div>
 				</div>
 			) : (
